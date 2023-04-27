@@ -66,12 +66,31 @@ var updateStatus = function() {
 
   setStatus(status);
   getLastCapture();
-  createTable();
+  var moves = createTable();
+  console.log("AFter create table, we gopt moves:"+moves);
   updateScroll();
-
   statusEl.html(status);
   fenEl.html(game.fen());
   pgnEl.html(game.pgn());
+  if(Object.keys(moves).length!=0){
+    console.log("Sending moves to server");
+    $.ajax({
+      url: '/',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(moves),
+      success: function(data) {
+        console.log("Chalo setting text");
+        console.log(data.advantage);
+        var myElement = document.getElementById("advantage");
+        myElement.textContent = data.advantage;
+        // $('#advantage').text(data.advantage);
+      },
+      error: function(error) {
+        console.error(error);
+      }
+    });
+  }
 };
 
 var cfg = {
@@ -150,9 +169,16 @@ var createTable = function() {
         html += '<tr><td>' + data[i].moveNumber + '</td><td>'
         + data[i].whiteMove + '</td><td>'
         + data[i].blackMove + '</td></tr>';
-    }
-
+    }    
     $('#pgn tr').first().after(html);
+    var moves = {};
+    if(data.length == 3 && data[2].blackMove!=''){
+      console.log("Game aarambham!");
+      var blackmoves = data[0].blackMove+', '+data[1].blackMove+' ,'+data[2].blackMove;
+      var whitemoves = data[0].whiteMove+', '+data[1].whiteMove+' ,'+data[2].whiteMove;
+      moves = {'black':blackmoves, 'white': whitemoves};
+    }  
+    return moves;
 }
 
 var updateScroll = function() {
